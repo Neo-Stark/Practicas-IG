@@ -50,13 +50,13 @@ void _objects::esfera() {
   int n = 24;
 
     Vertices.push_back(_vertex3f(0.0, -1.0, 0.0));
-  double angle = (M_PI / n);
+  double angle = (M_PI/2 / n);
   _revolucion Revolucion(Vertices);
   for (unsigned int k = 0; k < n; k++)
     Vertices.push_back(Revolucion.rotateZ(Vertices[k], angle));
 
   Vertices.erase(Vertices.begin());
-  Vertices.pop_back();
+  // Vertices.pop_back();
 
   Revolucion.nuevoPerfil(Vertices);
   Revolucion.generarPerfil(Vertices, Triangles, 0, 0);

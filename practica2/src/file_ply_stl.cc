@@ -152,7 +152,7 @@ void _file_ply::lee_ply(vector<_vertex3f> &Vertices,
   } else
     std::cout << "File can't be opened" << std::endl;
 
-  for (auto it = Vertices.begin(); it != Vertices.end(); it++)
+  // for (auto it = Vertices.begin(); it != Vertices.end(); it++)
     if (Vertices.front().y > Vertices.back().y) {
       queue<_vertex3f> cola;
       while (!Vertices.empty()) {
