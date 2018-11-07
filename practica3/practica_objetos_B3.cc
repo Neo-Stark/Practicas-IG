@@ -363,6 +363,10 @@ void menu() {
 //***************************************************************************
 
 int main(int argc, char **argv) {
+  if (argc < 2) {
+    cerr << "Uso: " << argv[0] << " arcvhivo.ply" << endl;
+    exit(1);
+  }
   // creación del objeto ply
   ply.parametros(argv[1]);
 
