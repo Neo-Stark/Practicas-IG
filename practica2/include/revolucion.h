@@ -17,6 +17,7 @@ class _revolucion {
                         vector<_vertex3i>& Triangles, bool generarPunto = 1);
   void generarCaraArriba(vector<_vertex3f>& Vertices,
                          vector<_vertex3i>& Triangles, bool generarPunto = 1);
+  void modificaSteps(int pasos) { steps = pasos; };
 
  private:
   int steps;
