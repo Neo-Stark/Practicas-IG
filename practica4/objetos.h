@@ -19,6 +19,7 @@ class _puntos3D {
   void draw_puntos(float r, float g, float b, int grosor);
 
   vector<_vertex3f> vertices;
+  vector<_vertex3f> normales_vertices;
 };
 
 //*************************************************************************
@@ -37,7 +38,13 @@ class _triangulos3D : public _puntos3D {
 
   virtual void process_key(unsigned char Tecla){};
 
+  void generarNormalesCaras();
+  void generarNormalesVertices();
+  void generarNormales();
+  void drawNormales();
+
   vector<_vertex3i> caras;
+  vector<_vertex3f> normales_caras;
 };
 
 //*************************************************************************
@@ -99,6 +106,7 @@ class _objeto_ply : public _triangulos3D {
   _objeto_ply();
 
   int parametros(char* archivo);
+  _file_ply lector;
 };
 
 //************************************************************************

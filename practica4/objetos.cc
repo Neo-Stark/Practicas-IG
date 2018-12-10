@@ -69,7 +69,7 @@ void _triangulos3D::draw_aristas(float r, float g, float b, int grosor) {
 void _triangulos3D::draw_solido(float r, float g, float b) {
   int i;
 
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glPolygonMode(GL_FRONT, GL_FILL);
   glColor3f(r, g, b);
   glBegin(GL_TRIANGLES);
   for (i = 0; i < caras.size(); i++) {
@@ -87,7 +87,7 @@ void _triangulos3D::draw_solido(float r, float g, float b) {
 void _triangulos3D::draw_solido_ajedrez(float r1, float g1, float b1, float r2,
                                         float g2, float b2) {
   int i;
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glPolygonMode(GL_FRONT, GL_FILL);
   glBegin(GL_TRIANGLES);
   for (i = 0; i < caras.size(); i++) {
     if (i % 2 == 0)
@@ -119,8 +119,82 @@ void _triangulos3D::draw(_modo modo, float r1, float g1, float b1, float r2,
       break;
     case SOLID:
       draw_solido(r1, g1, b1);
+      drawNormales();
       break;
   }
+}
+
+void _triangulos3D::generarNormalesCaras() {
+  for (int i = 0; i < caras.size(); i++) {
+    _vertex3f A, B, C;
+    A = vertices[caras[i]._0];
+    B = vertices[caras[i]._1];
+    C = vertices[caras[i]._2];
+
+    _vertex3f ab, bc, normal;
+
+    ab.x = B.x - A.x;
+    ab.y = B.y - A.y;
+    ab.z = B.z - A.z;
+
+    bc.x = C.x - B.x;
+    bc.y = C.y - B.y;
+    bc.z = C.z - B.z;
+
+    normal = ab.cross_product(bc);
+    normal = normal.normalize();
+
+    normales_caras.push_back(normal);
+  }
+}
+
+void _triangulos3D::generarNormalesVertices() {
+  // Recorremos los vertices
+  for (int i = 0; i < vertices.size(); i++) {
+    _vertex3f normal(0, 0, 0);
+
+    // Recorremos las caras
+    for (int j = 0; j < caras.size(); j++) {
+      // Comprobamos si el vertice esta en otra cara (por la posicion)
+      if (caras[j]._0 == i || caras[j]._1 == i || caras[j]._2 == i) {
+        normal = _vertex3f(normal.x + normales_caras[j].x,
+                           normal.y + normales_caras[j].y,
+                           normal.z + normales_caras[j].z);
+      }
+    }
+
+    normal = normal.normalize();
+    normales_vertices.push_back(normal);
+  }
+}
+
+void _triangulos3D::generarNormales(){
+  generarNormalesCaras();
+  generarNormalesVertices();
+}
+
+void _triangulos3D::drawNormales() {
+  if (normales_caras.size() != 0) {
+    glPointSize(2);
+    glColor3f(0, 0, 1);
+
+    glBegin(GL_LINES);
+
+    for (int i = 0; i < vertices.size(); i++) {
+      _vertex3f _1 = vertices[i];
+      _vertex3f _2;
+
+      _2.x = _1.x + normales_vertices[i].x;
+      _2.y = _1.y + normales_vertices[i].y;
+      _2.z = _1.z + normales_vertices[i].z;
+
+      glVertex3f(_1.x, _1.y, _1.z);
+      glVertex3f(_2.x, _2.y, _2.z);
+    }
+
+    glEnd();
+  } else
+    cout << "Normales no calculadas" << endl;
 }
 
 //*************************************************************************
@@ -193,6 +267,8 @@ _cubo::_cubo(float tam) {
   caras[11]._0 = 1;
   caras[11]._1 = 5;
   caras[11]._2 = 4;
+
+  generarNormales();
 }
 
 //*************************************************************************
@@ -237,6 +313,8 @@ _piramide::_piramide(float tam, float al) {
   caras[5]._0 = 3;
   caras[5]._1 = 2;
   caras[5]._2 = 1;
+
+  generarNormales();
 }
 
 //*************************************************************************
@@ -256,6 +334,8 @@ _cilindro::_cilindro() {
   aux.z = 0.0;
   perfil.push_back(aux);
   nuevoPerfil(perfil);
+  generarPerfil();
+  generarNormales();
 }
 //*************************************************************************
 // clase objeto ply
@@ -266,9 +346,9 @@ _objeto_ply::_objeto_ply() {
 }
 
 int _objeto_ply::parametros(char* archivo) {
-  _file_ply lector;
 
   lector.lee_ply(vertices, caras, archivo);
+  generarNormales();
 
   return (0);
 }
@@ -370,6 +450,8 @@ void _revolucion::generarPerfil(bool tapaArriba, bool tapaAbajo, char eje) {
 
   if (tapaAbajo) generarCaraAbajo();
   if (tapaArriba) generarCaraArriba();
+
+  generarNormales();
 }
 
 void _revolucion::generarCaraAbajo(bool generarPunto) {
@@ -551,6 +633,7 @@ _coche::_coche() {
   tope_suspension_min = -0.8;
   tope_desplazamiento = 15;
   tope_desplazamiento_min = -25;
+  generarNormales();
 };
 
 void _coche::draw(_modo modo) {

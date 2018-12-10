@@ -41,6 +41,7 @@ _objeto_ply ply;
 _revolucion rotacion;
 _tanque tanque;
 _coche coche;
+_cilindro cilindro;
 
 _objeto_ply *ply1;
 
@@ -107,7 +108,7 @@ void draw_axis() {
 void draw_objects() {
   switch (t_objeto) {
     case CUBO:
-      cubo.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+      cilindro.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
       break;
     case PIRAMIDE:
       piramide.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
@@ -156,7 +157,7 @@ void change_window_size(int Ancho1, int Alto1) {
   glutPostRedisplay();
 }
 
-//**********-o*****************************************************************
+//***************************************************************************
 // Funcion llamada cuando se aprieta una tecla normal
 //
 // el evento manda a la funcion:
@@ -283,6 +284,33 @@ void special_key(int Tecla1, int x, int y) {
   glutPostRedisplay();
 }
 
+void EnableLighting(void) {
+  GLfloat light_ambient[] = {.5, .5, .5, 1.0};
+  GLfloat light_diffuse[] = {.9, .9, .9, 1.0};
+  GLfloat light_specular[] = {1.0, 1.0, 1.0, 1.0};
+  GLfloat light_position[] = {20.0, 10.0, 30.0, 1.0};
+  GLfloat matSpecular[] = {1.0, 1.0, 1.0, 1.0};
+  float shininess = 20;
+
+  // glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+  // glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+  // glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpecular);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, matSpecular);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, matSpecular);
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+
+  GLfloat emision[] = {0.3, 0.3, 0.3, 1.0};
+  glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emision);
+
+  glEnable(GL_SMOOTH);    // enable smooth shading
+  glEnable(GL_LIGHTING);  // enable lighting
+  glEnable(GL_LIGHT0);    // enable light 0
+  glShadeModel(GL_SMOOTH);
+}
+
 //***************************************************************************
 // Funcion de incializacion
 //***************************************************************************
@@ -302,6 +330,8 @@ void initialize(void) {
   // se indica cual sera el color para limpiar la ventana	(r,v,a,al)
   // blanco=(1,1,1,1) rojo=(1,0,0,1), ...
   glClearColor(1, 1, 1, 1);
+
+  EnableLighting();
 
   // se habilita el z-bufer
   glEnable(GL_DEPTH_TEST);
@@ -377,14 +407,7 @@ int main(int argc, char **argv) {
   rotacion.vertices.push_back(_vertex3f(0.0, 1.0, 0.0));
   rotacion.nuevoPerfil(perfil);
   for (unsigned int k = 0; k < n; k++) {
-    if (rotacion.vertices[k].y <= 0.0)
-      rotacion.vertices.push_back(
-          rotacion.rotateZ(rotacion.vertices[k], angle));
-    else {
-      _vertex3f aux = rotacion.rotateZ(rotacion.vertices[k], angle);
-      aux.x -= 1;
-      rotacion.vertices.push_back(aux);
-    }
+    rotacion.vertices.push_back(rotacion.rotateZ(rotacion.vertices[k], angle));
   }
 
   rotacion.nuevoPerfil(rotacion.vertices);
