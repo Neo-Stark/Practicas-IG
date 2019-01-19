@@ -1,13 +1,24 @@
 #include <GL/gl.h>
 #include <stdlib.h>
 #include <vector>
+#include "colors.h"
 #include "file_ply_stl.h"
 #include "vertex.h"
 
 using namespace std;
 
 const float AXIS_SIZE = 5000;
-typedef enum { POINTS, EDGES, SOLID_CHESS, SOLID } _modo;
+typedef enum {
+  POINTS,
+  EDGES,
+  SOLID_CHESS,
+  SOLID,
+  ILLUMINATION_FLAT_SHADING,
+  ILLUMINATION_SMOOTH_SHADING,
+  TEXTURE,
+  TEXTURE_ILLUMINATION_FLAT_SHADING,
+  TEXTURE_ILLUMINATION_SMOOTH_SHADING
+} _modo;
 
 //*************************************************************************
 // clase punto
@@ -36,17 +47,32 @@ class _triangulos3D : public _puntos3D {
   virtual void draw(_modo modo, float r1, float g1, float b1, float r2,
                     float g2, float b2, float grosor);
 
-  virtual void process_key(unsigned char Tecla){};
-
+  void draw_illumination_flat_shading();
+  void draw_illumination_smooth_shading();
+  void draw_texture();
+  void draw_texture_illumination_flat_shading();
+  void draw_texture_illumination_smooth_shading();
   void generarNormalesCaras();
   void generarNormalesVertices();
   void generarNormales();
   void drawNormales();
+  void textura_general();
+  void generarNormalesExamen();
 
+  bool pintarNormales;
   vector<_vertex3i> caras;
   vector<_vertex3f> normales_caras;
+  vector<_vertex2f> Vertices_texture_coordinates;
+  vector<vector<_vertex2f>> caras_texture_coordinates;
 };
 
+class _chess_board : public _triangulos3D {
+ public:
+  _chess_board(float Size = 1.0, unsigned int Divisions1 = 1);
+
+ protected:
+  unsigned int Divisions;
+};
 //*************************************************************************
 // clase cubo
 //*************************************************************************
@@ -82,12 +108,22 @@ class _revolucion : public _triangulos3D {
   void modificaSteps(int pasos) { steps = pasos; };
   void esfera();
   void limpiar();
+  void calcular_coord_textura(int N, int M);
+  double distancia(_vertex3f a, _vertex3f b);
 
  private:
   int steps;
   vector<_vertex3f> Perfil;
 };
 
+//*************************************************************************
+// clase esfera
+//*************************************************************************
+class _esfera : public _revolucion {
+ public:
+  _esfera();
+  int div;
+};
 //*************************************************************************
 // clase cilindro
 //*************************************************************************
@@ -96,6 +132,14 @@ class _cilindro : public _revolucion {
  public:
   _cilindro();
 };
+//*************************************************************************
+// clase cono
+//*************************************************************************
+
+class _cono : public _revolucion {
+ public:
+  _cono();
+};
 
 //*************************************************************************
 // clase objeto ply
@@ -103,9 +147,7 @@ class _cilindro : public _revolucion {
 
 class _objeto_ply : public _triangulos3D {
  public:
-  _objeto_ply();
-
-  int parametros(char* archivo);
+  _objeto_ply(char*);
   _file_ply lector;
 };
 

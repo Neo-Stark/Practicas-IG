@@ -19,8 +19,8 @@ typedef enum {
   ARTICULADO,
   COCHE
 } _tipo_objeto;
-_tipo_objeto t_objeto = COCHE;
-_modo modo = SOLID_CHESS;
+_tipo_objeto t_objeto = PIRAMIDE;
+_modo modo = SOLID;
 
 bool animar = false;
 // variables que definen la posicion de la camara en coordenadas polares
@@ -39,8 +39,8 @@ _cubo cubo;
 _piramide piramide(0.85, 1.3);
 _objeto_ply ply;
 _revolucion rotacion;
-_tanque tanque;
-_coche coche;
+// _tanque tanque;
+// _coche coche;
 
 // _objeto_ply *ply1;
 
@@ -108,21 +108,21 @@ void draw_objects() {
   switch (t_objeto) {
     case CUBO:
       cubo.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
-      break;
+    break;
     case PIRAMIDE:
       piramide.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
       break;
-    case OBJETO_PLY:
-      ply.draw(modo, 1.0, 0.6, 0.0, 0.0, 1.0, 0.3, 2);
-      break;
-    case ROTACION:
-      rotacion.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
-      break;
-    case ARTICULADO:
-      tanque.draw(modo, 0.5, 0.7, 0.2, 0.3, 0.6, 0.3, 2);
-      break;
-    case COCHE:
-      coche.draw(modo);
+      case OBJETO_PLY:
+        ply.draw(modo, 1.0, 0.6, 0.0, 0.0, 1.0, 0.3, 2);
+        break;
+      case ROTACION:
+        rotacion.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+        break;
+      // case ARTICULADO:
+      //   tanque.draw(modo, 0.5, 0.7, 0.2, 0.3, 0.6, 0.3, 2);
+      //   break;
+      // case COCHE:
+      //   coche.draw(modo);
   }
 }
 
@@ -236,49 +236,49 @@ void special_key(int Tecla1, int x, int y) {
     case GLUT_KEY_PAGE_DOWN:
       Observer_distance /= 1.2;
       break;
-    case GLUT_KEY_F1:
-      tanque.giro_tubo += 1;
-      if (tanque.giro_tubo > tanque.giro_tubo_max)
-        tanque.giro_tubo = tanque.giro_tubo_max;
-      break;
-    case GLUT_KEY_F2:
-      tanque.giro_tubo -= 1;
-      if (tanque.giro_tubo < tanque.giro_tubo_min)
-        tanque.giro_tubo = tanque.giro_tubo_min;
-      break;
-      break;
-    case GLUT_KEY_F3:
-      tanque.giro_torreta += 5;
-      break;
-    case GLUT_KEY_F4:
-      tanque.giro_torreta -= 5;
-      break;
-    case GLUT_KEY_F5:
-      coche.giro_antena += 5;
-      break;
-    case GLUT_KEY_F6:
-      coche.giro_antena -= 5;
-      break;
-    case GLUT_KEY_F7:
-      coche.desplazamiento += 1;
-      if (coche.desplazamiento > coche.tope_desplazamiento)
-        coche.desplazamiento = coche.tope_desplazamiento;
-      break;
-    case GLUT_KEY_F8:
-      coche.desplazamiento -= 1;
-      if (coche.desplazamiento < coche.tope_desplazamiento_min)
-        coche.desplazamiento = coche.tope_desplazamiento_min;
-      break;
-    case GLUT_KEY_F9:
-      coche.suspension += 0.2;
-      if (coche.suspension > coche.tope_suspension)
-        coche.suspension = coche.tope_suspension;
-      break;
-    case GLUT_KEY_F10:
-      coche.suspension -= 0.2;
-      if (coche.suspension < coche.tope_suspension_min)
-        coche.suspension = coche.tope_suspension_min;
-      break;
+    // case GLUT_KEY_F1:
+    //   tanque.giro_tubo += 1;
+    //   if (tanque.giro_tubo > tanque.giro_tubo_max)
+    //     tanque.giro_tubo = tanque.giro_tubo_max;
+    //   break;
+    // case GLUT_KEY_F2:
+    //   tanque.giro_tubo -= 1;
+    //   if (tanque.giro_tubo < tanque.giro_tubo_min)
+    //     tanque.giro_tubo = tanque.giro_tubo_min;
+    //   break;
+    //   break;
+    // case GLUT_KEY_F3:
+    //   tanque.giro_torreta += 5;
+    //   break;
+    // case GLUT_KEY_F4:
+    //   tanque.giro_torreta -= 5;
+    //   break;
+    // case GLUT_KEY_F5:
+    //   coche.giro_antena += 5;
+    //   break;
+    // case GLUT_KEY_F6:
+    //   coche.giro_antena -= 5;
+    //   break;
+    // case GLUT_KEY_F7:
+    //   coche.desplazamiento += 1;
+    //   if (coche.desplazamiento > coche.tope_desplazamiento)
+    //     coche.desplazamiento = coche.tope_desplazamiento;
+    //   break;
+    // case GLUT_KEY_F8:
+    //   coche.desplazamiento -= 1;
+    //   if (coche.desplazamiento < coche.tope_desplazamiento_min)
+    //     coche.desplazamiento = coche.tope_desplazamiento_min;
+    //   break;
+    // case GLUT_KEY_F9:
+    //   coche.suspension += 0.2;
+    //   if (coche.suspension > coche.tope_suspension)
+    //     coche.suspension = coche.tope_suspension;
+    //   break;
+    // case GLUT_KEY_F10:
+    //   coche.suspension -= 0.2;
+    //   if (coche.suspension < coche.tope_suspension_min)
+    //     coche.suspension = coche.tope_suspension_min;
+    //   break;
   }
   // std::cout << coche.desplazamiento << ' ' << coche.tope_desplazamiento << '
   // '
@@ -316,24 +316,24 @@ void initialize(void) {
 //***************************************************************************
 // Funcion de animacion
 //***************************************************************************
-void animacion() {
-  static int susp = true;
-  if (animar && t_objeto == COCHE) {
-    coche.desplazamiento -= 1;
-    if (coche.desplazamiento < coche.tope_desplazamiento_min)
-      coche.desplazamiento = 0;
-    coche.giro_antena += 30;
-    if (coche.giro_antena > 360) coche.giro_antena = 0;
-    if (susp) {
-      coche.suspension += 0.5;
-      susp = false;
-    } else {
-      coche.suspension -= 0.5;
-      susp = true;
-    }
-  }
-  glutPostRedisplay();
-}
+// void animacion() {
+//   static int susp = true;
+//   if (animar && t_objeto == COCHE) {
+//     coche.desplazamiento -= 1;
+//     if (coche.desplazamiento < coche.tope_desplazamiento_min)
+//       coche.desplazamiento = 0;
+//     coche.giro_antena += 30;
+//     if (coche.giro_antena > 360) coche.giro_antena = 0;
+//     if (susp) {
+//       coche.suspension += 0.5;
+//       susp = false;
+//     } else {
+//       coche.suspension -= 0.5;
+//       susp = true;
+//     }
+//   }
+//   glutPostRedisplay();
+// }
 
 void menu() {
   cout << endl << endl;
@@ -363,32 +363,32 @@ void menu() {
 //***************************************************************************
 
 int main(int argc, char **argv) {
-  if (argc < 2) {
-    cerr << "Uso: " << argv[0] << " arcvhivo.ply" << endl;
-    exit(1);
-  }
+  // if (argc < 2) {
+  //   cerr << "Uso: " << argv[0] << " arcvhivo.ply" << endl;
+  //   exit(1);
+  // }
   // creación del objeto ply
-  ply.parametros(argv[1]);
+  // ply.parametros(argv[1]);
 
   // creacion del objeto por revolucion
-  _file_ply lector;
+  // _file_ply lector;
   // lector.lee_ply(rotacion.vertices, rotacion.caras, "peon.ply");
-  int n = 12;
+  // int n = 12;
 
-  double angle = (M_PI / n);
-  vector<_vertex3f> perfil;
-  rotacion.vertices.push_back(_vertex3f(0.0, 1.0, 0.0));
-  rotacion.nuevoPerfil(perfil);
-  for (unsigned int k = 0; k < n; k++) {
-    if (rotacion.vertices[k].y <= 0.0)
-      rotacion.vertices.push_back(
-          rotacion.rotateZ(rotacion.vertices[k], angle));
-    else {
-      _vertex3f aux = rotacion.rotateZ(rotacion.vertices[k], angle);
-      aux.x -= 1;
-      rotacion.vertices.push_back(aux);
-    }
-  }
+  // double angle = (M_PI / n);
+  // vector<_vertex3f> perfil;
+  // rotacion.vertices.push_back(_vertex3f(0.0, 1.0, 0.0));
+  // rotacion.nuevoPerfil(perfil);
+  // for (unsigned int k = 0; k < n; k++) {
+  //   if (rotacion.vertices[k].y <= 0.0)
+  //     rotacion.vertices.push_back(
+  //         rotacion.rotateZ(rotacion.vertices[k], angle));
+  //   else {
+  //     _vertex3f aux = rotacion.rotateZ(rotacion.vertices[k], angle);
+  //     aux.x -= 1;
+  //     rotacion.vertices.push_back(aux);
+  //   }
+  // }
   // rotacion.limpiar();
   // float x, y;
   // int Size = 1;
@@ -405,8 +405,8 @@ int main(int argc, char **argv) {
   //   rotacion.vertices.push_back(_vertex3f(x + Size, y + Size, 0));
   // }
 
-  rotacion.nuevoPerfil(rotacion.vertices);
-  rotacion.generarPerfil(0, 0);
+  // rotacion.nuevoPerfil(rotacion.vertices);
+  // rotacion.generarPerfil(0, 0);
 
   // se llama a la inicialización de glut
   glutInit(&argc, argv);
@@ -442,7 +442,7 @@ int main(int argc, char **argv) {
   glutSpecialFunc(special_key);
 
   // Animacion
-  glutIdleFunc(animacion);
+  // glutIdleFunc(animacion);
 
   // funcion de inicialización
   initialize();

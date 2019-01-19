@@ -1,4 +1,6 @@
 #include "objetos.h"
+using namespace std;
+using namespace _colors_ne;
 
 //*************************************************************************
 // _puntos3D
@@ -68,7 +70,6 @@ void _triangulos3D::draw_aristas(float r, float g, float b, int grosor) {
 
 void _triangulos3D::draw_solido(float r, float g, float b) {
   int i;
-
   glPolygonMode(GL_FRONT, GL_FILL);
   glColor3f(r, g, b);
   glBegin(GL_TRIANGLES);
@@ -94,11 +95,189 @@ void _triangulos3D::draw_solido_ajedrez(float r1, float g1, float b1, float r2,
       glColor3f(r1, g1, b1);
     else
       glColor3f(r2, g2, b2);
+
     glVertex3fv((GLfloat*)&vertices[caras[i]._0]);
     glVertex3fv((GLfloat*)&vertices[caras[i]._1]);
     glVertex3fv((GLfloat*)&vertices[caras[i]._2]);
   }
   glEnd();
+}
+
+void _triangulos3D::draw_illumination_flat_shading() {
+  int i;
+  glPolygonMode(GL_FRONT, GL_FILL);
+  glColor3fv((GLfloat*)&WHITE);
+  glShadeModel(GL_FLAT);
+  glEnable(GL_LIGHTING);
+  glBegin(GL_TRIANGLES);
+  for (i = 0; i < caras.size(); i++) {
+    if (normales_vertices.size() > 0) glNormal3fv((GLfloat*)&normales_caras[i]);
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._0]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._0]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._1]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._2]);
+  }
+  glEnd();
+  glDisable(GL_LIGHTING);
+  glBegin(GL_LINES);
+  glColor3f(0, 1, 0);
+  for (i = 0; i < caras.size(); i++) {
+    auto v =
+        vertices[caras[i]._0] + vertices[caras[i]._1] + vertices[caras[i]._2];
+    v = v / 3.0;
+
+    glVertex3fv((GLfloat*)&v);
+    auto n = normales_caras[i] + v;
+    glVertex3fv((GLfloat*)&n);
+  }
+  glEnd();
+}
+
+void _triangulos3D::draw_illumination_smooth_shading() {
+  int i;
+  glPolygonMode(GL_FRONT, GL_FILL);
+  glEnable(GL_LIGHTING);
+  glShadeModel(GL_SMOOTH);
+  glColor3fv((GLfloat*)&WHITE);
+  glBegin(GL_TRIANGLES);
+  for (i = 0; i < caras.size(); i++) {
+    if (normales_vertices.size() > 0)
+      glNormal3fv((GLfloat*)&normales_vertices[caras[i]._0]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._0]);
+
+    if (normales_vertices.size() > 0)
+      glNormal3fv((GLfloat*)&normales_vertices[caras[i]._1]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._1]);
+
+    if (normales_vertices.size() > 0)
+      glNormal3fv((GLfloat*)&normales_vertices[caras[i]._2]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._2]);
+  }
+  glEnd();
+  glDisable(GL_LIGHTING);
+}
+
+void _triangulos3D::textura_general() {
+  GLfloat plano_s[4] = {1.0, 0.0, 0.0, 0.0}, plano_t[4] = {0.0, 1.0, 0.0, 0.0};
+  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+  glTexGenfv(GL_S, GL_OBJECT_PLANE, plano_s);
+  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+  glTexGenfv(GL_T, GL_OBJECT_PLANE, plano_t);
+  glEnable(GL_TEXTURE_GEN_S);
+  glEnable(GL_TEXTURE_GEN_T);
+}
+void _triangulos3D::draw_texture() {
+  int i;
+  if (Vertices_texture_coordinates.size() != vertices.size() and
+      caras_texture_coordinates.size() != caras.size())
+    textura_general();
+  glPolygonMode(GL_FRONT, GL_FILL);
+  glColor3fv((GLfloat*)&WHITE);
+  glEnable(GL_TEXTURE_2D);
+  glBegin(GL_TRIANGLES);
+  for (i = 0; i < caras.size(); i++) {
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._0]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][0]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._0]);
+
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._1]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][1]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._1]);
+
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._2]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][2]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._2]);
+  }
+  glEnd();
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_TEXTURE_GEN_S);
+  glDisable(GL_TEXTURE_GEN_T);
+}
+void _triangulos3D::draw_texture_illumination_flat_shading() {
+  int i;
+  if (Vertices_texture_coordinates.size() == 0 and
+      caras_texture_coordinates.size() == 0)
+    textura_general();
+  glPolygonMode(GL_FRONT, GL_FILL);
+  glColor3fv((GLfloat*)&WHITE);
+  glShadeModel(GL_FLAT);
+  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_LIGHTING);
+  glBegin(GL_TRIANGLES);
+  for (i = 0; i < caras.size(); i++) {
+    if (normales_vertices.size() > 0) glNormal3fv((GLfloat*)&normales_caras[i]);
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._0]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][0]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._0]);
+
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._1]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][1]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._1]);
+
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._2]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][2]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._2]);
+  }
+  glEnd();
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_LIGHTING);
+  glDisable(GL_TEXTURE_GEN_S);
+  glDisable(GL_TEXTURE_GEN_T);
+}
+void _triangulos3D::draw_texture_illumination_smooth_shading() {
+  int i;
+  if (Vertices_texture_coordinates.size() == 0 and
+      caras_texture_coordinates.size() == 0)
+    textura_general();
+  glPolygonMode(GL_FRONT, GL_FILL);
+  glColor3fv((GLfloat*)&WHITE);
+  glShadeModel(GL_SMOOTH);
+  glEnable(GL_LIGHTING);
+  glEnable(GL_TEXTURE_2D);
+  glBegin(GL_TRIANGLES);
+  for (i = 0; i < caras.size(); i++) {
+    if (normales_vertices.size() > 0)
+      glNormal3fv((GLfloat*)&normales_vertices[caras[i]._0]);
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._0]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][0]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._0]);
+
+    if (normales_vertices.size() > 0)
+      glNormal3fv((GLfloat*)&normales_vertices[caras[i]._1]);
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._1]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][1]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._1]);
+
+    if (normales_vertices.size() > 0)
+      glNormal3fv((GLfloat*)&normales_vertices[caras[i]._2]);
+    if (Vertices_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&Vertices_texture_coordinates[caras[i]._2]);
+    else if (caras_texture_coordinates.size() > 0)
+      glTexCoord2fv((GLfloat*)&caras_texture_coordinates[i][2]);
+    glVertex3fv((GLfloat*)&vertices[caras[i]._2]);
+  }
+  glEnd();
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_LIGHTING);
+  glDisable(GL_TEXTURE_GEN_S);
+  glDisable(GL_TEXTURE_GEN_T);
 }
 
 //*************************************************************************
@@ -107,6 +286,8 @@ void _triangulos3D::draw_solido_ajedrez(float r1, float g1, float b1, float r2,
 
 void _triangulos3D::draw(_modo modo, float r1, float g1, float b1, float r2,
                          float g2, float b2, float grosor) {
+  glCullFace(GL_BACK);
+  glEnable(GL_CULL_FACE);
   switch (modo) {
     case POINTS:
       draw_puntos(r1, g1, b1, grosor);
@@ -119,9 +300,24 @@ void _triangulos3D::draw(_modo modo, float r1, float g1, float b1, float r2,
       break;
     case SOLID:
       draw_solido(r1, g1, b1);
-      drawNormales();
+      break;
+    case ILLUMINATION_FLAT_SHADING:
+      draw_illumination_flat_shading();
+      break;
+    case ILLUMINATION_SMOOTH_SHADING:
+      draw_illumination_smooth_shading();
+      break;
+    case TEXTURE:
+      draw_texture();
+      break;
+    case TEXTURE_ILLUMINATION_FLAT_SHADING:
+      draw_texture_illumination_flat_shading();
+      break;
+    case TEXTURE_ILLUMINATION_SMOOTH_SHADING:
+      draw_texture_illumination_smooth_shading();
       break;
   }
+  // drawNormales();
 }
 
 void _triangulos3D::generarNormalesCaras() {
@@ -168,9 +364,33 @@ void _triangulos3D::generarNormalesVertices() {
   }
 }
 
-void _triangulos3D::generarNormales(){
+void _triangulos3D::generarNormalesExamen() {
+  int M_x = 0, M_y = 0, M_z = 0, m_x = 0, m_y = 0, m_z = 0;
+  // Recorremos los vertices
+  for (int i = 0; i < vertices.size(); i++) {
+    _vertex3f punto(vertices[i]);
+    if (punto.x > M_x) M_x = punto.x;
+    if (punto.y > M_y) M_y = punto.y;
+    if (punto.z > M_z) M_z = punto.z;
+    if (punto.x < m_x) m_x = punto.x;
+    if (punto.y < m_y) m_y = punto.y;
+    if (punto.z < m_z) m_z = punto.z;
+  }
+  _vertex3f centro((M_x + m_x) / 2, (M_y + m_y) / 2, (M_z + m_z) / 2);
+
+  for (int i = 0; i < vertices.size(); i++) {
+    _vertex3f punto(vertices[i]);
+    _vertex3f normal(punto.x - centro.x, punto.y - centro.y,
+                     punto.z - centro.z);
+
+    normal = normal.normalize();
+    normales_vertices.push_back(normal);
+  }
+}
+
+void _triangulos3D::generarNormales() {
   generarNormalesCaras();
-  generarNormalesVertices();
+  generarNormalesExamen();
 }
 
 void _triangulos3D::drawNormales() {
@@ -197,6 +417,22 @@ void _triangulos3D::drawNormales() {
     cout << "Normales no calculadas" << endl;
 }
 
+_chess_board::_chess_board(float Size, unsigned int Divisions1) {
+  vertices.push_back(_vertex3f(0, 0, -Size / 2));
+  vertices.push_back(_vertex3f(0, 0, Size / 2));
+  vertices.push_back(_vertex3f(0, Size, Size / 2));
+  vertices.push_back(_vertex3f(0, Size, -Size / 2));
+
+  caras.push_back(_vertex3i(0, 1, 3));
+  caras.push_back(_vertex3i(1, 2, 3));
+
+  generarNormales();
+
+  Vertices_texture_coordinates.push_back(_vertex2f(0, 1));
+  Vertices_texture_coordinates.push_back(_vertex2f(1, 1));
+  Vertices_texture_coordinates.push_back(_vertex2f(1, 0));
+  Vertices_texture_coordinates.push_back(_vertex2f(0, 0));
+}
 //*************************************************************************
 // clase cubo
 //*************************************************************************
@@ -207,66 +443,98 @@ _cubo::_cubo(float tam) {
   vertices[0].x = -tam;
   vertices[0].y = -tam;
   vertices[0].z = tam;
+
   vertices[1].x = tam;
   vertices[1].y = -tam;
   vertices[1].z = tam;
+
   vertices[2].x = tam;
   vertices[2].y = tam;
   vertices[2].z = tam;
+
   vertices[3].x = -tam;
   vertices[3].y = tam;
   vertices[3].z = tam;
+
   vertices[4].x = -tam;
   vertices[4].y = -tam;
   vertices[4].z = -tam;
+
   vertices[5].x = tam;
   vertices[5].y = -tam;
   vertices[5].z = -tam;
+
   vertices[6].x = tam;
   vertices[6].y = tam;
   vertices[6].z = -tam;
+
   vertices[7].x = -tam;
   vertices[7].y = tam;
   vertices[7].z = -tam;
 
   // triangulos
-  caras.resize(12);
-  caras[0]._0 = 0;
-  caras[0]._1 = 1;
-  caras[0]._2 = 3;
-  caras[1]._0 = 3;
-  caras[1]._1 = 1;
-  caras[1]._2 = 2;
-  caras[2]._0 = 1;
-  caras[2]._1 = 5;
-  caras[2]._2 = 2;
-  caras[3]._0 = 5;
-  caras[3]._1 = 6;
-  caras[3]._2 = 2;
-  caras[4]._0 = 5;
-  caras[4]._1 = 4;
-  caras[4]._2 = 6;
-  caras[5]._0 = 4;
-  caras[5]._1 = 7;
-  caras[5]._2 = 6;
-  caras[6]._0 = 0;
-  caras[6]._1 = 7;
-  caras[6]._2 = 4;
-  caras[7]._0 = 0;
-  caras[7]._1 = 3;
-  caras[7]._2 = 7;
-  caras[8]._0 = 3;
-  caras[8]._1 = 2;
-  caras[8]._2 = 7;
-  caras[9]._0 = 2;
-  caras[9]._1 = 6;
-  caras[9]._2 = 7;
-  caras[10]._0 = 0;
-  caras[10]._1 = 1;
-  caras[10]._2 = 4;
-  caras[11]._0 = 1;
-  caras[11]._1 = 5;
-  caras[11]._2 = 4;
+  caras.push_back(_vertex3i(0, 1, 3));
+  caras.push_back(_vertex3i(3, 1, 2));
+
+  caras.push_back(_vertex3i(1, 5, 2));
+  caras.push_back(_vertex3i(2, 5, 6));
+
+  caras.push_back(_vertex3i(5, 4, 6));
+  caras.push_back(_vertex3i(6, 4, 7));
+
+  caras.push_back(_vertex3i(4, 0, 7));
+  caras.push_back(_vertex3i(7, 0, 3));
+
+  caras.push_back(_vertex3i(3, 2, 7));
+  caras.push_back(_vertex3i(7, 2, 6));
+
+  caras.push_back(_vertex3i(0, 4, 1));
+  caras.push_back(_vertex3i(1, 4, 5));
+
+  // texels
+  // cara 1
+  caras_texture_coordinates.resize(12);
+  caras_texture_coordinates[0].push_back(_vertex2f(0, 1));
+  caras_texture_coordinates[0].push_back(_vertex2f(0.5, 1));
+  caras_texture_coordinates[0].push_back(_vertex2f(0, 0.5));
+  caras_texture_coordinates[1].push_back(_vertex2f(0, 0.5));
+  caras_texture_coordinates[1].push_back(_vertex2f(0.5, 1));
+  caras_texture_coordinates[1].push_back(_vertex2f(0.5, 0.5));
+
+  caras_texture_coordinates[4].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[4].push_back(_vertex2f(0, 0.5));
+  caras_texture_coordinates[4].push_back(_vertex2f(0.5, 1));
+  caras_texture_coordinates[5].push_back(_vertex2f(0.5, 1));
+  caras_texture_coordinates[5].push_back(_vertex2f(0, 0.5));
+  caras_texture_coordinates[5].push_back(_vertex2f(0, 1));
+
+  caras_texture_coordinates[2].push_back(_vertex2f(1, 0.5));
+  caras_texture_coordinates[2].push_back(_vertex2f(1, 0));
+  caras_texture_coordinates[2].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[3].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[3].push_back(_vertex2f(1, 0));
+  caras_texture_coordinates[3].push_back(_vertex2f(0.5, 0));
+
+  caras_texture_coordinates[6].push_back(_vertex2f(1, 0.5));
+  caras_texture_coordinates[6].push_back(_vertex2f(1, 0));
+  caras_texture_coordinates[6].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[7].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[7].push_back(_vertex2f(1, 0));
+  caras_texture_coordinates[7].push_back(_vertex2f(0.5, 0));
+
+  caras_texture_coordinates[8].push_back(_vertex2f(0, 0.5));
+  caras_texture_coordinates[8].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[8].push_back(_vertex2f(0, 0));
+  caras_texture_coordinates[9].push_back(_vertex2f(0, 0));
+  caras_texture_coordinates[9].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[9].push_back(_vertex2f(0.5, 0));
+
+  caras_texture_coordinates[10].push_back(_vertex2f(0.5, 1));
+  caras_texture_coordinates[10].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[10].push_back(_vertex2f(1, 1));
+  caras_texture_coordinates[11].push_back(_vertex2f(1, 1));
+  caras_texture_coordinates[11].push_back(_vertex2f(0.5, 0.5));
+  caras_texture_coordinates[11].push_back(_vertex2f(1, 0.5));
 
   generarNormales();
 }
@@ -281,15 +549,19 @@ _piramide::_piramide(float tam, float al) {
   vertices[0].x = -tam;
   vertices[0].y = 0;
   vertices[0].z = tam;
+
   vertices[1].x = tam;
   vertices[1].y = 0;
   vertices[1].z = tam;
+
   vertices[2].x = tam;
   vertices[2].y = 0;
   vertices[2].z = -tam;
+
   vertices[3].x = -tam;
   vertices[3].y = 0;
   vertices[3].z = -tam;
+
   vertices[4].x = 0;
   vertices[4].y = al;
   vertices[4].z = 0;
@@ -298,23 +570,35 @@ _piramide::_piramide(float tam, float al) {
   caras[0]._0 = 0;
   caras[0]._1 = 1;
   caras[0]._2 = 4;
+
   caras[1]._0 = 1;
   caras[1]._1 = 2;
   caras[1]._2 = 4;
+
   caras[2]._0 = 2;
   caras[2]._1 = 3;
   caras[2]._2 = 4;
+
   caras[3]._0 = 3;
   caras[3]._1 = 0;
   caras[3]._2 = 4;
+
   caras[4]._0 = 3;
   caras[4]._1 = 1;
   caras[4]._2 = 0;
+
   caras[5]._0 = 3;
   caras[5]._1 = 2;
   caras[5]._2 = 1;
 
   generarNormales();
+  caras_texture_coordinates.resize(2);
+  caras_texture_coordinates[0].push_back(_vertex2f(0, 0));
+  caras_texture_coordinates[0].push_back(_vertex2f(1, 0));
+  caras_texture_coordinates[0].push_back(_vertex2f(0.5, 1));
+  caras_texture_coordinates[1].push_back(_vertex2f(0, 0));
+  caras_texture_coordinates[1].push_back(_vertex2f(1, 0));
+  caras_texture_coordinates[1].push_back(_vertex2f(0.5, 1));
 }
 
 //*************************************************************************
@@ -325,12 +609,12 @@ _cilindro::_cilindro() {
   // perfil para un cilindro
   vector<_vertex3f> perfil;
   _vertex3f aux;
-  aux.x = 1.0;
-  aux.y = -0.35;
+  aux.x = .5;
+  aux.y = -0.7;
   aux.z = 0.0;
   perfil.push_back(aux);
-  aux.x = 1.0;
-  aux.y = 0.35;
+  aux.x = .5;
+  aux.y = 0.7;
   aux.z = 0.0;
   perfil.push_back(aux);
   nuevoPerfil(perfil);
@@ -341,16 +625,49 @@ _cilindro::_cilindro() {
 // clase objeto ply
 //*************************************************************************
 
-_objeto_ply::_objeto_ply() {
+_objeto_ply::_objeto_ply(char* archivo) {
   // leer lista de coordenadas de vértices y lista de indices de vértices
-}
-
-int _objeto_ply::parametros(char* archivo) {
-
   lector.lee_ply(vertices, caras, archivo);
   generarNormales();
+}
 
-  return (0);
+_esfera::_esfera() {
+  div = 12;
+
+  double angle = (M_PI / div);
+  vector<_vertex3f> perfil;
+  vertices.push_back(_vertex3f(0.0, -1.0, 0.0));
+  nuevoPerfil(perfil);
+  for (unsigned int k = 0; k < div; k++) {
+    vertices.push_back(rotateZ(vertices[k], angle));
+  }
+
+  _vertex3f vertice_sup = vertices.back();
+  _vertex3f vertice_inf = vertices.front();
+  vertices.erase(vertices.begin());
+  vertices.erase(vertices.end());
+
+  nuevoPerfil(vertices);
+  generarPerfil(0, 0);
+  vertices.push_back(vertice_inf);
+  generarCaraAbajo(false);
+  vertices.push_back(vertice_sup);
+  generarCaraArriba(false);
+  generarNormales();
+}
+
+_cono::_cono() {
+  vector<_vertex3f> perfil;
+  _vertex3f aux;
+  aux.x = 0.5;
+  aux.y = 0.0;
+  aux.z = 0.0;
+  perfil.push_back(aux);
+  nuevoPerfil(perfil);
+  generarPerfil(0);
+  vertices.push_back(_vertex3f(0.0, 1.0, 0.0));
+  generarCaraArriba(false);
+  generarNormales();
 }
 
 //************************************************************************
@@ -387,24 +704,24 @@ _vertex3f _revolucion::rotateZ(_vertex3f p, float alpha) {
   return point;
 }
 
-void _revolucion::nuevoPerfil(const vector<_vertex3f>& vertices) {
+void _revolucion::nuevoPerfil(const vector<_vertex3f>& perfil) {
   Perfil.erase(Perfil.begin(), Perfil.end());
-  Perfil = vertices;
+  Perfil = perfil;
 }
 
 void _revolucion::generarPerfil(bool tapaArriba, bool tapaAbajo, char eje) {
   int i, j;
   _vertex3f vertice_aux;
   _vertex3i cara_aux;
-  int num_aux;
+  int p_size;
   eje = toupper(eje);
 
-  num_aux = Perfil.size();
+  p_size = Perfil.size();
   double angle = (2.0 * M_PI) / steps;
 
   for (int step = 0; step < steps; step++) {
-    vector<_vertex3f> siguientePerfil(Perfil.size());
-    for (unsigned int k = 0; k < Perfil.size(); k++)
+    vector<_vertex3f> siguientePerfil(p_size);
+    for (unsigned int k = 0; k < p_size; k++)
       if (eje == 'Y')
         siguientePerfil[k] = rotateY(Perfil[k], angle);
       else if (eje == 'X')
@@ -435,15 +752,15 @@ void _revolucion::generarPerfil(bool tapaArriba, bool tapaAbajo, char eje) {
     // tratamiento de las caras
   }
   for (j = 0; j < steps; j++) {
-    for (i = 0; i < num_aux - 1; i++) {
-      cara_aux._0 = i + ((j + 1) % steps) * num_aux;
-      cara_aux._1 = i + 1 + ((j + 1) % steps) * num_aux;
-      cara_aux._2 = i + 1 + j * num_aux;
+    for (i = 0; i < p_size - 1; i++) {
+      cara_aux._0 = i + ((j + 1) % steps) * p_size;
+      cara_aux._1 = i + 1 + ((j + 1) % steps) * p_size;
+      cara_aux._2 = i + 1 + j * p_size;
       caras.push_back(cara_aux);
 
-      cara_aux._0 = i + 1 + j * num_aux;
-      cara_aux._1 = i + j * num_aux;
-      cara_aux._2 = i + ((j + 1) % steps) * num_aux;
+      cara_aux._0 = i + 1 + j * p_size;
+      cara_aux._1 = i + j * p_size;
+      cara_aux._2 = i + ((j + 1) % steps) * p_size;
       caras.push_back(cara_aux);
     }
   }
@@ -451,7 +768,7 @@ void _revolucion::generarPerfil(bool tapaArriba, bool tapaAbajo, char eje) {
   if (tapaAbajo) generarCaraAbajo();
   if (tapaArriba) generarCaraArriba();
 
-  generarNormales();
+  calcular_coord_textura(steps, Perfil.size());
 }
 
 void _revolucion::generarCaraAbajo(bool generarPunto) {
@@ -480,10 +797,36 @@ void _revolucion::generarCaraArriba(bool generarPunto) {
     int siguientePerfil = perfilactual + Perfil.size();
     if (step == (steps - 1)) siguientePerfil = Perfil.size() - 1;
     caras.push_back(
-        _vertex3i(vertices.size() - 1, perfilactual, siguientePerfil));
+        _vertex3i(perfilactual, siguientePerfil, vertices.size() - 1));
   }
 }
 
+void _revolucion::calcular_coord_textura(int N, int M) {
+  int n_vertices = vertices.size();
+
+  double d[M];  // vector de distancias
+  d[0] = 0;
+
+  for (unsigned int k = 1; k < M; k++)
+    d[k] = d[k - 1] + distancia(vertices[k - 1], vertices[k]);
+
+  for (unsigned int i = 0; i <= N; i++) {
+    float si = (float)i / (N - 1);
+    for (unsigned int j = 0; j < M; j++) {
+      float tj = d[j] / d[M - 1];
+
+      Vertices_texture_coordinates.push_back(_vertex2f(tj, si));
+    }
+  }
+}
+
+double _revolucion::distancia(_vertex3f a, _vertex3f b) {
+  double x = pow((b.x - a.x), 2);
+  double y = pow((b.y - a.y), 2);
+  double z = pow((b.z - a.z), 2);
+
+  return sqrt((double)(x + y + z));
+}
 //************************************************************************
 // objeto articulado: tanque
 //************************************************************************
@@ -638,20 +981,27 @@ _coche::_coche() {
 
 void _coche::draw(_modo modo) {
   glPushMatrix();
-  glTranslatef(10.0, 0.0, 0.0);
-  glTranslatef(desplazamiento, 0.0, 0.0);
-  draw_ruedas(modo);
-  glPushMatrix();
-  glTranslatef(0.0, suspension, 0.0);
-  draw_chasis(modo);
-  draw_cabina(modo);
-  glPushMatrix();
-  glTranslatef(4.5, 5.0, 0.6);
-  glRotatef(giro_antena, 0, 1, 0);
-  glTranslatef(-4.5, -5.0, -0.6);
-  draw_antena(modo);
-  glPopMatrix();
-  glPopMatrix();
+  {
+    glScalef(0.5, 0.5, 0.5);
+    glTranslatef(10.0, 0.0, 0.0);
+    glTranslatef(desplazamiento, 0.0, 0.0);
+    draw_ruedas(modo);
+    glPushMatrix();
+    {
+      glTranslatef(0.0, suspension, 0.0);
+      draw_chasis(modo);
+      draw_cabina(modo);
+      glPushMatrix();
+      {
+        glTranslatef(4.5, 5.0, 0.6);
+        glRotatef(giro_antena, 0, 1, 0);
+        glTranslatef(-4.5, -5.0, -0.6);
+        draw_antena(modo);
+      }
+      glPopMatrix();
+    }
+    glPopMatrix();
+  }
   glPopMatrix();
 }
 void _coche::draw_ruedas(_modo modo) {
@@ -721,13 +1071,14 @@ void _coche::draw_cabina(_modo modo) {
 
   double angle = (M_PI / 2 / n);
   vector<_vertex3f> perfil;
-  perfil.push_back(_vertex3f(0.0, 1.0, 0.0));
+  perfil.push_back(_vertex3f(1.0, 0.0, 0.0));
   cabina.nuevoPerfil(perfil);
   for (unsigned int k = 0; k < n; k++)
     perfil.push_back(cabina.rotateZ(perfil[k], angle));
 
   cabina.nuevoPerfil(perfil);
   cabina.generarPerfil(false, false);
+  cabina.generarNormales();
 
   glPushMatrix();
   glScalef(2, 2.5, 3);
