@@ -151,7 +151,7 @@ class _cono : public _revolucion {
 
 class _objeto_ply : public _triangulos3D {
  public:
-  _objeto_ply(char*);
+  _objeto_ply(const char*);
   _file_ply lector;
 };
 

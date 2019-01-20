@@ -663,7 +663,7 @@ _cilindro::_cilindro() {
 // clase objeto ply
 //*************************************************************************
 
-_objeto_ply::_objeto_ply(char *archivo) {
+_objeto_ply::_objeto_ply(const char *archivo) {
   // leer lista de coordenadas de vértices y lista de indices de vértices
   lector.lee_ply(vertices, caras, archivo);
   generarNormales();

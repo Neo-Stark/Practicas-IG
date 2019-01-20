@@ -101,7 +101,8 @@ void _file_ply::read(vector<_vertex3f> &Vertices,
               get_token(Line_stream, Token);
               Vertices[i].z = stof(Token);
 
-              // cout << " leido " << Vertices[i].x << " " << Vertices[i].y << " "
+              // cout << " leido " << Vertices[i].x << " " << Vertices[i].y << "
+              // "
               //      << Vertices[i].z << endl;
             }
             for (unsigned int i = 0; i < Triangles.size(); i++) {

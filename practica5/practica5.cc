@@ -23,7 +23,7 @@ bool perspectiva = true;
 bool seleccionado = false;
 
 // tipos
-typedef enum {
+typedef enum _tipo_objeto {
   CUBO,
   PIRAMIDE,
   OBJETO_PLY,
@@ -32,9 +32,10 @@ typedef enum {
   COCHE,
   CILINDRO,
   CONO,
-  TABLERO
+  TABLERO,
+  ESCENA
 } _tipo_objeto;
-_tipo_objeto t_objeto = PIRAMIDE;
+_tipo_objeto t_objeto = ESCENA;
 _modo modo = SOLID;
 
 unsigned int Material_active = 0;
@@ -323,6 +324,13 @@ void draw_objects() {
     case ESFERA:
       esfera.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
       break;
+    case ESCENA:
+      glPushMatrix();
+      glTranslatef(2, 0, 0);
+      esfera.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+      glPopMatrix();
+      cubo.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+      break;
   }
 }
 
@@ -465,7 +473,8 @@ void initialize(void) {
   set_materials();
 
   change_projection();
-  glViewport(UI_window_pos_x, UI_window_pos_y, Window_width/2, Window_high/2);
+  glViewport(UI_window_pos_x, UI_window_pos_y, Window_width / 2,
+             Window_high / 2);
   glutSwapBuffers();
 }
 
@@ -536,6 +545,13 @@ void pick(GLint Selection_position_x, GLint Selection_position_y) {
         break;
       case ESFERA:
         esfera.seleccionados[pickedID] = !esfera.seleccionados[pickedID];
+        break;
+      case ESCENA:
+        if (pickedID < esfera.seleccionados.size())
+          esfera.seleccionados[pickedID] = !esfera.seleccionados[pickedID];
+        else
+          cubo.seleccionados[pickedID - esfera.seleccionados.size()] =
+              !cubo.seleccionados[pickedID - esfera.seleccionados.size()];
         break;
     }
   }
@@ -609,7 +625,7 @@ void mousefunc(int button, int state, int x, int y) {
 int main(int argc, char **argv) {
   // creación del objeto ply
   if (argc < 2) {
-    char *nombre = "ply/beethoven.ply";
+    const char *nombre = "ply/beethoven.ply";
     ply1 = new _objeto_ply(nombre);
   } else
     ply1 = new _objeto_ply(argv[1]);
