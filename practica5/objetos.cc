@@ -45,6 +45,12 @@ void _triangulos3D::generarVectorSeleccion() {
   }
 }
 
+void _triangulos3D::seleccionarCara(int cara) {
+  int pos = cara - colorInicial;
+  if (pos >= 0 && pos < seleccionados.size())
+    seleccionados[pos] = !seleccionados[pos];
+}
+
 //*************************************************************************
 // dibujar en modo arista
 //*************************************************************************
@@ -81,7 +87,7 @@ void _triangulos3D::draw_solido(float r, float g, float b) {
   glPolygonMode(GL_FRONT, GL_FILL);
   glBegin(GL_TRIANGLES);
   for (i = 0; i < caras.size(); i++) {
-    if (seleccionados[i] == true)
+    if (!seleccionados.empty() && seleccionados.at(i) == true)
       glColor3f(1, 1, 0);
     else
       glColor3f(r, g, b);
@@ -97,9 +103,9 @@ void _triangulos3D::draw_selection() {
 
   glBegin(GL_TRIANGLES);
   for (auto i = 0; i < caras.size(); i++) {
-    rgb[0] = ((i & 0x00FF0000) >> 16) / 255.0;
-    rgb[1] = ((i & 0x0000FF00) >> 8) / 255.0;
-    rgb[2] = (i & 0x000000FF) / 255.0;
+    rgb[0] = (((i + colorInicial) & 0x00FF0000) >> 16) / 255.0;
+    rgb[1] = (((i + colorInicial) & 0x0000FF00) >> 8) / 255.0;
+    rgb[2] = ((i + colorInicial) & 0x000000FF) / 255.0;
     glColor3f(rgb[0], rgb[1], rgb[2]);
     glPolygonMode(GL_FRONT, GL_FILL);
     glVertex3fv((GLfloat *)&vertices[caras[i]._0]);
@@ -471,7 +477,8 @@ _chess_board::_chess_board(float Size, unsigned int Divisions1) {
 // clase cubo
 //*************************************************************************
 
-_cubo::_cubo(float tam) {
+_cubo::_cubo(float tam, int colorIni) {
+  colorInicial = colorIni;
   // vertices
   vertices.resize(8);
   vertices[0].x = -tam;
@@ -578,7 +585,8 @@ _cubo::_cubo(float tam) {
 // clase piramide
 //*************************************************************************
 
-_piramide::_piramide(float tam, float al) {
+_piramide::_piramide(float tam, float al, int colorIni) {
+  colorInicial = colorIni;
   // vertices
   vertices.resize(5);
   vertices[0].x = -tam;
@@ -642,7 +650,7 @@ _piramide::_piramide(float tam, float al) {
 // clase cilindro
 //*************************************************************************
 
-_cilindro::_cilindro() {
+_cilindro::_cilindro(int colorIni) {
   // perfil para un cilindro
   vector<_vertex3f> perfil;
   _vertex3f aux;
@@ -658,20 +666,23 @@ _cilindro::_cilindro() {
   generarPerfil();
   generarNormales();
   generarVectorSeleccion();
+  colorInicial = colorIni;
 }
 //*************************************************************************
 // clase objeto ply
 //*************************************************************************
 
-_objeto_ply::_objeto_ply(const char *archivo) {
+_objeto_ply::_objeto_ply(const char *archivo, int colorIni) {
   // leer lista de coordenadas de vértices y lista de indices de vértices
   lector.lee_ply(vertices, caras, archivo);
   generarNormales();
   generarVectorSeleccion();
+  colorInicial = colorIni;
 }
 
-_esfera::_esfera() {
+_esfera::_esfera(int colorIni) {
   div = 12;
+  colorInicial = colorIni;
 
   double angle = (M_PI / div);
   vector<_vertex3f> perfil;
@@ -696,7 +707,8 @@ _esfera::_esfera() {
   generarVectorSeleccion();
 }
 
-_cono::_cono() {
+_cono::_cono(int colorIni) {
+  colorInicial = colorIni;
   vector<_vertex3f> perfil;
   _vertex3f aux;
   aux.x = 0.5;
@@ -867,4 +879,171 @@ double _revolucion::distancia(_vertex3f a, _vertex3f b) {
   double z = pow((b.z - a.z), 2);
 
   return sqrt((double)(x + y + z));
+}
+
+//************************************************************************
+// objeto articulado: tanque
+//************************************************************************
+
+_chasis::_chasis(int colorIni) : base(0.5, colorIni) {
+  // perfil para un cilindro
+  vector<_vertex3f> perfil;
+  _vertex3f aux;
+  aux.x = 0.107;
+  aux.y = -0.5;
+  aux.z = 0.0;
+  perfil.push_back(aux);
+  aux.x = 0.107;
+  aux.y = 0.5;
+  aux.z = 0.0;
+  perfil.push_back(aux);
+  rodamiento.nuevoPerfil(perfil);
+  rodamiento.generarPerfil();
+  altura = 0.22;
+  rodamiento.colorInicial = colorIni + base.caras.size();
+  base.generarVectorSeleccion();
+  rodamiento.generarVectorSeleccion();
+};
+
+int _chasis::numCaras() {
+  return base.seleccionados.size() + rodamiento.seleccionados.size();
+}
+
+void _chasis::draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
+                   float b2, float grosor) {
+  glPushMatrix();
+  glScalef(1.0, 0.22, 0.95);
+  base.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+
+  glPushMatrix();
+  glRotatef(90.0, 1, 0, 0);
+  rodamiento.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+
+  glPushMatrix();
+  glTranslatef(-0.25, 0.0, 0.0);
+  glRotatef(90.0, 1, 0, 0);
+  rodamiento.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+
+  glPushMatrix();
+  glTranslatef(-0.5, 0.0, 0.0);
+  glRotatef(90.0, 1, 0, 0);
+  rodamiento.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+
+  glPushMatrix();
+  glTranslatef(0.25, 0.0, 0.0);
+  glRotatef(90.0, 1, 0, 0);
+  rodamiento.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+
+  glPushMatrix();
+  glTranslatef(0.5, 0.0, 0.0);
+  glRotatef(90.0, 1, 0, 0);
+  rodamiento.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+}
+
+//************************************************************************
+
+_torreta::_torreta(int colorIni) : base(0.5), parte_trasera(0.5, 0.75) {
+  base.colorInicial = colorIni;
+  base.generarVectorSeleccion();
+  parte_trasera.colorInicial = colorIni + base.caras.size();
+  parte_trasera.generarVectorSeleccion();
+  altura = 0.18;
+  anchura = 0.65;
+};
+
+int _torreta::numCaras() {
+  return base.seleccionados.size() + parte_trasera.seleccionados.size();
+}
+
+void _torreta::draw(_modo modo, float r1, float g1, float b1, float r2,
+                    float g2, float b2, float grosor) {
+  glPushMatrix();
+  glScalef(0.65, 0.18, 0.6);
+  base.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+
+  glPushMatrix();
+  glTranslatef(-0.325, 0, 0);
+  glRotatef(90.0, 0, 0, 1);
+  glScalef(0.18, 0.16, 0.6);
+  parte_trasera.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+}
+
+//************************************************************************
+
+_tubo::_tubo(int colorIni) {
+  tubo_abierto.colorInicial = colorIni;
+  // perfil para un cilindro
+  vector<_vertex3f> perfil;
+  _vertex3f aux;
+  aux.x = 0.04;
+  aux.y = -0.4;
+  aux.z = 0.0;
+  perfil.push_back(aux);
+  aux.x = 0.04;
+  aux.y = 0.4;
+  aux.z = 0.0;
+  perfil.push_back(aux);
+  tubo_abierto.nuevoPerfil(perfil);
+  tubo_abierto.generarPerfil(false, false);
+  tubo_abierto.generarVectorSeleccion();
+};
+
+void _tubo::draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
+                 float b2, float grosor) {
+  glPushMatrix();
+  glTranslatef(0.4, 0, 0);
+  glRotatef(90.0, 0, 0, 1);
+  tubo_abierto.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+}
+
+//************************************************************************
+
+_tanque::_tanque(int colorIni)
+    : chasis(colorIni),
+      torreta(colorIni + chasis.numCaras()),
+      tubo(colorIni + chasis.numCaras() + torreta.numCaras()) {
+  giro_tubo = 2.0;
+  giro_torreta = 0.0;
+  giro_tubo_min = -9;
+  giro_tubo_max = 20;
+  cout << "CARAS CHASIS: " << chasis.numCaras() << endl;
+  cout << "CARAS torreta: " << torreta.numCaras() << endl;
+};
+
+void _tanque::draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
+                   float b2, float grosor) {
+  glPushMatrix();
+  chasis.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+
+  glRotatef(giro_torreta, 0, 1, 0);
+  glPushMatrix();
+  glTranslatef(0.0, (chasis.altura + torreta.altura) / 2.0, 0.0);
+  torreta.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+
+  glPushMatrix();
+  glTranslatef(torreta.anchura / 2.0, (chasis.altura + torreta.altura) / 2.0,
+               0.0);
+  glRotatef(giro_tubo, 0, 0, 1);
+  // std::cout << giro_tubo << std::endl;
+  tubo.draw(modo, r1, g1, b1, r2, g2, b2, grosor);
+  glPopMatrix();
+  glPopMatrix();
+};
+
+void _tanque::seleccionarCara(int cara) {
+  chasis.base.seleccionarCara(cara);
+  chasis.rodamiento.seleccionarCara(cara);
+  torreta.base.seleccionarCara(cara);
+  torreta.parte_trasera.seleccionarCara(cara);
+  tubo.tubo_abierto.seleccionarCara(cara);
 }

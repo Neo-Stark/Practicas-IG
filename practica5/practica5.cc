@@ -7,7 +7,6 @@
 #include <math.h>
 #include <vector>
 #include "objetos.h"
-#include "textura.h"
 
 using namespace std;
 
@@ -35,7 +34,7 @@ typedef enum _tipo_objeto {
   TABLERO,
   ESCENA
 } _tipo_objeto;
-_tipo_objeto t_objeto = ESCENA;
+_tipo_objeto t_objeto = OBJETO_PLY;
 _modo modo = SOLID;
 
 unsigned int Material_active = 0;
@@ -60,12 +59,13 @@ int UI_window_pos_x = 50, UI_window_pos_y = 50, UI_window_width = 800,
 int Window_x = 50, Window_y = 50, Window_width = 450, Window_high = 450;
 
 // objetos
-_cubo cubo;
 _piramide piramide(0.85, 1.3);
 _esfera esfera;
+_cubo cubo(1);
 _cilindro cilindro;
 _cono cono;
 _triangulos3D *ply1;
+_tanque tanque(esfera.seleccionados.size());
 
 void clear_window() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
 
@@ -326,10 +326,10 @@ void draw_objects() {
       break;
     case ESCENA:
       glPushMatrix();
-      glTranslatef(2, 0, 0);
-      esfera.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+      glTranslatef(2, 3, 0);
+      esfera.draw(modo, 0.95, 0.95, 0.95, 0.0, 1.0, 0.0, 2);
       glPopMatrix();
-      cubo.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+      tanque.draw(modo, 1.0, 0.0, 0.0, 0.25, 1.0, 0.0, 2);
       break;
   }
 }
@@ -340,8 +340,8 @@ void draw_objects() {
 
 void draw(void) {
   clear_window();
-  change_observer();
   change_projection();
+  change_observer();
   draw_axis();
   draw_objects();
   glutSwapBuffers();
@@ -394,6 +394,8 @@ void normal_key(unsigned char Tecla1, int x, int y) {
     case '6':
       t_objeto = OBJETO_PLY;
       break;
+    case '0':
+      t_objeto = ESCENA;
     case 'C':
       perspectiva = true;
       change_projection();
@@ -473,8 +475,7 @@ void initialize(void) {
   set_materials();
 
   change_projection();
-  glViewport(UI_window_pos_x, UI_window_pos_y, Window_width / 2,
-             Window_high / 2);
+  glViewport(UI_window_pos_x, UI_window_pos_y, Window_width, Window_high);
   glutSwapBuffers();
 }
 
@@ -529,29 +530,26 @@ void pick(GLint Selection_position_x, GLint Selection_position_y) {
     cout << "CARA: " << pickedID << endl;
     switch (t_objeto) {
       case CUBO:
-        cubo.seleccionados[pickedID] = !cubo.seleccionados[pickedID];
+        cubo.seleccionarCara(pickedID);
         break;
       case CILINDRO:
-        cilindro.seleccionados[pickedID] = !cilindro.seleccionados[pickedID];
+        cilindro.seleccionarCara(pickedID);
         break;
       case CONO:
-        cono.seleccionados[pickedID] = !cono.seleccionados[pickedID];
+        cono.seleccionarCara(pickedID);
         break;
       case PIRAMIDE:
-        piramide.seleccionados[pickedID] = !piramide.seleccionados[pickedID];
+        piramide.seleccionarCara(pickedID);
         break;
       case OBJETO_PLY:
-        ply1->seleccionados[pickedID] = !ply1->seleccionados[pickedID];
+        ply1->seleccionarCara(pickedID);
         break;
       case ESFERA:
-        esfera.seleccionados[pickedID] = !esfera.seleccionados[pickedID];
+        esfera.seleccionarCara(pickedID);
         break;
       case ESCENA:
-        if (pickedID < esfera.seleccionados.size())
-          esfera.seleccionados[pickedID] = !esfera.seleccionados[pickedID];
-        else
-          cubo.seleccionados[pickedID - esfera.seleccionados.size()] =
-              !cubo.seleccionados[pickedID - esfera.seleccionados.size()];
+        esfera.seleccionarCara(pickedID);
+        tanque.seleccionarCara(pickedID);
         break;
     }
   }
@@ -599,7 +597,6 @@ void mousefunc(int button, int state, int x, int y) {
         estadoRaton = 0;
         break;
       case GLUT_RIGHT_BUTTON:
-        pick(x, y);
         estadoRaton = 2;
         break;
       case 3:  // mouse wheel scrolls -- UP
@@ -611,7 +608,8 @@ void mousefunc(int button, int state, int x, int y) {
       default:
         break;
     }
-  }
+  } else if (state == GLUT_UP and button == GLUT_RIGHT_BUTTON)
+    pick(x, y);
   glutPostRedisplay();
 }
 

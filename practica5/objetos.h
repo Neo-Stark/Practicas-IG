@@ -61,6 +61,7 @@ class _triangulos3D : public _puntos3D {
   void textura_general();
   void generarNormalesExamen();
   void generarVectorSeleccion();
+  virtual void seleccionarCara(int cara);
 
   bool pintarNormales;
   vector<_vertex3i> caras;
@@ -68,6 +69,7 @@ class _triangulos3D : public _puntos3D {
   vector<_vertex2f> Vertices_texture_coordinates;
   vector<vector<_vertex2f>> caras_texture_coordinates;
   vector<bool> seleccionados;
+  int colorInicial;
 };
 
 class _chess_board : public _triangulos3D {
@@ -83,7 +85,7 @@ class _chess_board : public _triangulos3D {
 
 class _cubo : public _triangulos3D {
  public:
-  _cubo(float tam = 1);
+  _cubo(float tam = 1, int colorIni = 0);
 };
 
 //*************************************************************************
@@ -92,7 +94,7 @@ class _cubo : public _triangulos3D {
 
 class _piramide : public _triangulos3D {
  public:
-  _piramide(float tam = 1, float al = 0.75);
+  _piramide(float tam = 1, float al = 0.75, int colorIni = 0);
 };
 
 //************************************************************************
@@ -125,7 +127,7 @@ class _revolucion : public _triangulos3D {
 //*************************************************************************
 class _esfera : public _revolucion {
  public:
-  _esfera();
+  _esfera(int colorIni = 0);
   int div;
 };
 //*************************************************************************
@@ -134,7 +136,7 @@ class _esfera : public _revolucion {
 
 class _cilindro : public _revolucion {
  public:
-  _cilindro();
+  _cilindro(int colorIni = 0);
 };
 //*************************************************************************
 // clase cono
@@ -142,7 +144,7 @@ class _cilindro : public _revolucion {
 
 class _cono : public _revolucion {
  public:
-  _cono();
+  _cono(int colorIni = 0);
 };
 
 //*************************************************************************
@@ -151,7 +153,7 @@ class _cono : public _revolucion {
 
 class _objeto_ply : public _triangulos3D {
  public:
-  _objeto_ply(const char*);
+  _objeto_ply(const char*, int colorIni = 0);
   _file_ply lector;
 };
 
@@ -161,9 +163,11 @@ class _objeto_ply : public _triangulos3D {
 
 class _chasis : public _triangulos3D {
  public:
-  _chasis();
+  friend class _tanque;
+  _chasis(int colorIni = 0);
   void draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
             float b2, float grosor);
+  int numCaras();
 
   float altura;
 
@@ -176,9 +180,11 @@ class _chasis : public _triangulos3D {
 
 class _torreta : public _triangulos3D {
  public:
-  _torreta();
+  friend class _tanque;
+  _torreta(int colorIni = 0);
   void draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
             float b2, float grosor);
+  int numCaras();
 
   float altura;
   float anchura;
@@ -191,8 +197,10 @@ class _torreta : public _triangulos3D {
 //************************************************************************
 
 class _tubo : public _triangulos3D {
+  friend class _tanque;
+
  public:
-  _tubo();
+  _tubo(int colorIni = 0);
   void draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
             float b2, float grosor);
 
@@ -204,9 +212,10 @@ class _tubo : public _triangulos3D {
 
 class _tanque : public _triangulos3D {
  public:
-  _tanque();
+  _tanque(int colorIni = 0);
   void draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
             float b2, float grosor);
+  void seleccionarCara(int cara);
 
   float giro_tubo;
   float giro_torreta;
@@ -222,7 +231,7 @@ class _tanque : public _triangulos3D {
 
 class _coche : public _triangulos3D {
  public:
-  _coche();
+  _coche(int colorIni = 0);
   void draw(_modo);
   void draw_ruedas(_modo);
   void draw_cabina(_modo);

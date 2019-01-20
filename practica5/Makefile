@@ -45,8 +45,8 @@ default : $(TARGETS)
 # regla de dependencias
 #
 
-$(TARGETS) : file_ply_stl.o objetos.o textura.o practica5.o
-	$(CC) -o $@ $(CXXFLAGS) file_ply_stl.o objetos.o practica5.o textura.o $(LDFLAGS)
+$(TARGETS) : file_ply_stl.o objetos.o practica5.o
+	$(CC) -o $@ $(CXXFLAGS) file_ply_stl.o objetos.o practica5.o $(LDFLAGS)
 
 
 #
