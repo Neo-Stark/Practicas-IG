@@ -14,21 +14,24 @@ _puntos3D::_puntos3D() {}
 
 void _puntos3D::draw_puntos(float r, float g, float b, int grosor) {
   //**** usando vertex_array ****
-  glPointSize(grosor);
-  glColor3f(r, g, b);
+  // glPointSize(5);
+  // glColor3f(r, g, b);
 
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
-  glDrawArrays(GL_POINTS, 0, vertices.size());
-
-  /*int i;
-  glPointSize(grosor);
-  glColor3f(r,g,b);
+  // glEnableClientState(GL_VERTEX_ARRAY);
+  // glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
+  // glDrawArrays(GL_POINTS, 0, vertices.size());
+  float rgb[3];
+  int i;
+  glPointSize(10);
   glBegin(GL_POINTS);
-  for (i=0;i<vertices.size();i++){
-          glVertex3fv((GLfloat *) &vertices[i]);
-          }
-  glEnd();*/
+  for (i = 0; i < vertices.size(); i++) {
+    rgb[0] = (((i)&0x00FF0000) >> 16) / 255.0;
+    rgb[1] = (((i)&0x0000FF00) >> 8) / 255.0;
+    rgb[2] = ((i)&0x000000FF) / 255.0;
+    glColor3f(rgb[0], rgb[1], rgb[2]);
+    glVertex3fv((GLfloat *)&vertices[i]);
+  }
+  glEnd();
 }
 
 //*************************************************************************
@@ -37,7 +40,7 @@ void _puntos3D::draw_puntos(float r, float g, float b, int grosor) {
 
 _triangulos3D::_triangulos3D() {}
 
-void _triangulos3D::generarVectorSeleccion() {
+void _triangulos3D::generarVectorSeleccionCaras() {
   seleccionados.resize(caras.size());
   cout << caras.size() << endl;
   for (int i = 0; i < caras.size(); i++) {
@@ -45,10 +48,22 @@ void _triangulos3D::generarVectorSeleccion() {
   }
 }
 
-void _triangulos3D::seleccionarCara(int cara) {
+void _triangulos3D::generarVectorSeleccionVertices() {
+  seleccionados.resize(vertices.size());
+  cout << vertices.size() << endl;
+  for (int i = 0; i < vertices.size(); i++) {
+    seleccionados[i] = false;
+  }
+}
+
+bool _triangulos3D::seleccionarCara(int cara) {
+  bool cambiado = false;
   int pos = cara - colorInicial;
-  if (pos >= 0 && pos < seleccionados.size())
+  if (pos >= 0 && pos < seleccionados.size()) {
+    cambiado = true;
     seleccionados[pos] = !seleccionados[pos];
+  }
+  return cambiado;
 }
 
 //*************************************************************************
@@ -87,7 +102,13 @@ void _triangulos3D::draw_solido(float r, float g, float b) {
   glPolygonMode(GL_FRONT, GL_FILL);
   glBegin(GL_TRIANGLES);
   for (i = 0; i < caras.size(); i++) {
-    if (!seleccionados.empty() && seleccionados.at(i) == true)
+    if (seleccionados.size() == vertices.size() &&
+        (seleccionados.at(caras[i]._0) == true or
+         seleccionados.at(caras[i]._1) == true or
+         seleccionados.at(caras[i]._2) == true))
+      glColor3f(1, 1, 0);
+    else if (seleccionados.size() == caras.size() &&
+             seleccionados.at(i) == true)
       glColor3f(1, 1, 0);
     else
       glColor3f(r, g, b);
@@ -101,18 +122,32 @@ void _triangulos3D::draw_solido(float r, float g, float b) {
 void _triangulos3D::draw_selection() {
   float rgb[3];
 
-  glBegin(GL_TRIANGLES);
-  for (auto i = 0; i < caras.size(); i++) {
-    rgb[0] = (((i + colorInicial) & 0x00FF0000) >> 16) / 255.0;
-    rgb[1] = (((i + colorInicial) & 0x0000FF00) >> 8) / 255.0;
-    rgb[2] = ((i + colorInicial) & 0x000000FF) / 255.0;
-    glColor3f(rgb[0], rgb[1], rgb[2]);
+  if (seleccionados.size() == caras.size()) {
     glPolygonMode(GL_FRONT, GL_FILL);
-    glVertex3fv((GLfloat *)&vertices[caras[i]._0]);
-    glVertex3fv((GLfloat *)&vertices[caras[i]._1]);
-    glVertex3fv((GLfloat *)&vertices[caras[i]._2]);
+    glBegin(GL_TRIANGLES);
+    for (auto i = 0; i < caras.size(); i++) {
+      rgb[0] = (((i + colorInicial) & 0x00FF0000) >> 16) / 255.0;
+      rgb[1] = (((i + colorInicial) & 0x0000FF00) >> 8) / 255.0;
+      rgb[2] = ((i + colorInicial) & 0x000000FF) / 255.0;
+      glColor3f(rgb[0], rgb[1], rgb[2]);
+      glVertex3fv((GLfloat *)&vertices[caras[i]._0]);
+      glVertex3fv((GLfloat *)&vertices[caras[i]._1]);
+      glVertex3fv((GLfloat *)&vertices[caras[i]._2]);
+    }
+    glEnd();
+  } else if (seleccionados.size() == vertices.size()) {
+    int i;
+    glPointSize(10);
+    glBegin(GL_POINTS);
+    for (i = 0; i < vertices.size(); i++) {
+      rgb[0] = (((i)&0x00FF0000) >> 16) / 255.0;
+      rgb[1] = (((i)&0x0000FF00) >> 8) / 255.0;
+      rgb[2] = ((i)&0x000000FF) / 255.0;
+      glColor3f(rgb[0], rgb[1], rgb[2]);
+      glVertex3fv((GLfloat *)&vertices[i]);
+    }
+    glEnd();
   }
-  glEnd();
 }
 
 //*************************************************************************
@@ -147,26 +182,27 @@ void _triangulos3D::draw_illumination_flat_shading() {
   for (i = 0; i < caras.size(); i++) {
     if (normales_vertices.size() > 0)
       glNormal3fv((GLfloat *)&normales_caras[i]);
-    if (Vertices_texture_coordinates.size() > 0)
-      glTexCoord2fv((GLfloat *)&Vertices_texture_coordinates[caras[i]._0]);
     glVertex3fv((GLfloat *)&vertices[caras[i]._0]);
     glVertex3fv((GLfloat *)&vertices[caras[i]._1]);
     glVertex3fv((GLfloat *)&vertices[caras[i]._2]);
   }
   glEnd();
-  glDisable(GL_LIGHTING);
-  glBegin(GL_LINES);
-  glColor3f(0, 1, 0);
-  for (i = 0; i < caras.size(); i++) {
-    auto v =
-        vertices[caras[i]._0] + vertices[caras[i]._1] + vertices[caras[i]._2];
-    v = v / 3.0;
+  ///////// * DIBUJADO DE LAS NORMALES *
+  // glDisable(GL_LIGHTING);
+  // glBegin(GL_LINES);
+  // glColor3f(0, 1, 0);
+  // for (i = 0; i < caras.size(); i++) {
+  //   auto v =
+  //       vertices[caras[i]._0] + vertices[caras[i]._1] +
+  //       vertices[caras[i]._2];
+  //   v = v / 3.0;
 
-    glVertex3fv((GLfloat *)&v);
-    auto n = normales_caras[i] + v;
-    glVertex3fv((GLfloat *)&n);
-  }
-  glEnd();
+  //   glVertex3fv((GLfloat *)&v);
+  //   auto n = normales_caras[i] + v;
+  //   glVertex3fv((GLfloat *)&n);
+  // }
+  // glEnd();
+  glDisable(GL_LIGHTING);
 }
 
 void _triangulos3D::draw_illumination_smooth_shading() {
@@ -578,7 +614,7 @@ _cubo::_cubo(float tam, int colorIni) {
   caras_texture_coordinates[11].push_back(_vertex2f(1, 0.5));
 
   generarNormales();
-  generarVectorSeleccion();
+  generarVectorSeleccionVertices();
 }
 
 //*************************************************************************
@@ -643,7 +679,7 @@ _piramide::_piramide(float tam, float al, int colorIni) {
   caras_texture_coordinates[1].push_back(_vertex2f(1, 0));
   caras_texture_coordinates[1].push_back(_vertex2f(0.5, 1));
 
-  generarVectorSeleccion();
+  generarVectorSeleccionCaras();
 }
 
 //*************************************************************************
@@ -665,7 +701,7 @@ _cilindro::_cilindro(int colorIni) {
   nuevoPerfil(perfil);
   generarPerfil();
   generarNormales();
-  generarVectorSeleccion();
+  generarVectorSeleccionCaras();
   colorInicial = colorIni;
 }
 //*************************************************************************
@@ -676,7 +712,7 @@ _objeto_ply::_objeto_ply(const char *archivo, int colorIni) {
   // leer lista de coordenadas de vértices y lista de indices de vértices
   lector.lee_ply(vertices, caras, archivo);
   generarNormales();
-  generarVectorSeleccion();
+  generarVectorSeleccionCaras();
   colorInicial = colorIni;
 }
 
@@ -704,7 +740,7 @@ _esfera::_esfera(int colorIni) {
   vertices.push_back(vertice_sup);
   generarCaraArriba(false);
   generarNormales();
-  generarVectorSeleccion();
+  generarVectorSeleccionCaras();
 }
 
 _cono::_cono(int colorIni) {
@@ -720,7 +756,7 @@ _cono::_cono(int colorIni) {
   vertices.push_back(_vertex3f(0.0, 1.0, 0.0));
   generarCaraArriba(false);
   generarNormales();
-  generarVectorSeleccion();
+  generarVectorSeleccionCaras();
 }
 
 //************************************************************************
@@ -901,8 +937,8 @@ _chasis::_chasis(int colorIni) : base(0.5, colorIni) {
   rodamiento.generarPerfil();
   altura = 0.22;
   rodamiento.colorInicial = colorIni + base.caras.size();
-  base.generarVectorSeleccion();
-  rodamiento.generarVectorSeleccion();
+  base.generarVectorSeleccionCaras();
+  rodamiento.generarVectorSeleccionCaras();
 };
 
 int _chasis::numCaras() {
@@ -950,9 +986,9 @@ void _chasis::draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
 
 _torreta::_torreta(int colorIni) : base(0.5), parte_trasera(0.5, 0.75) {
   base.colorInicial = colorIni;
-  base.generarVectorSeleccion();
+  base.generarVectorSeleccionCaras();
   parte_trasera.colorInicial = colorIni + base.caras.size();
-  parte_trasera.generarVectorSeleccion();
+  parte_trasera.generarVectorSeleccionCaras();
   altura = 0.18;
   anchura = 0.65;
 };
@@ -993,7 +1029,7 @@ _tubo::_tubo(int colorIni) {
   perfil.push_back(aux);
   tubo_abierto.nuevoPerfil(perfil);
   tubo_abierto.generarPerfil(false, false);
-  tubo_abierto.generarVectorSeleccion();
+  tubo_abierto.generarVectorSeleccionCaras();
 };
 
 void _tubo::draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
@@ -1040,10 +1076,15 @@ void _tanque::draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
   glPopMatrix();
 };
 
-void _tanque::seleccionarCara(int cara) {
-  chasis.base.seleccionarCara(cara);
-  chasis.rodamiento.seleccionarCara(cara);
-  torreta.base.seleccionarCara(cara);
-  torreta.parte_trasera.seleccionarCara(cara);
-  tubo.tubo_abierto.seleccionarCara(cara);
+bool _tanque::seleccionarCara(int cara) {
+  if(chasis.base.seleccionarCara(cara))
+    cout << "Chasis seleccionado" << endl;
+  if(chasis.rodamiento.seleccionarCara(cara))
+  cout << "Rodamientos seleccionados" << endl;
+  if(torreta.base.seleccionarCara(cara))
+  cout << "Base seleccionada" << endl;
+  if(torreta.parte_trasera.seleccionarCara(cara))
+  cout << "Parte trasera seleccionada" << endl;
+  if(tubo.tubo_abierto.seleccionarCara(cara))
+  cout << "Tubo seleccionado" << endl;
 }

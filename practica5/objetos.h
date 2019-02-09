@@ -32,6 +32,7 @@ class _puntos3D {
 
   vector<_vertex3f> vertices;
   vector<_vertex3f> normales_vertices;
+  int colorInicial;
 };
 
 //*************************************************************************
@@ -60,8 +61,9 @@ class _triangulos3D : public _puntos3D {
   void drawNormales();
   void textura_general();
   void generarNormalesExamen();
-  void generarVectorSeleccion();
-  virtual void seleccionarCara(int cara);
+  void generarVectorSeleccionCaras();
+  void generarVectorSeleccionVertices();
+  virtual bool seleccionarCara(int cara);
 
   bool pintarNormales;
   vector<_vertex3i> caras;
@@ -69,7 +71,6 @@ class _triangulos3D : public _puntos3D {
   vector<_vertex2f> Vertices_texture_coordinates;
   vector<vector<_vertex2f>> caras_texture_coordinates;
   vector<bool> seleccionados;
-  int colorInicial;
 };
 
 class _chess_board : public _triangulos3D {
@@ -215,7 +216,7 @@ class _tanque : public _triangulos3D {
   _tanque(int colorIni = 0);
   void draw(_modo modo, float r1, float g1, float b1, float r2, float g2,
             float b2, float grosor);
-  void seleccionarCara(int cara);
+  bool seleccionarCara(int cara);
 
   float giro_tubo;
   float giro_torreta;

@@ -10,16 +10,17 @@
 
 using namespace std;
 
-const float X_MIN = -.1;
-const float X_MAX = .1;
-const float Y_MIN = -.1;
-const float Y_MAX = .1;
+const float X_MIN = -1.1;
+const float X_MAX = 1.1;
+const float Y_MIN = -1.1;
+const float Y_MAX = 1.1;
 const float FRONT_PLANE_PERSPECTIVE = (X_MAX - X_MIN) / 2;
 const float BACK_PLANE_PERSPECTIVE = 1000;
 const float DEFAULT_DISTANCE = 2;
 const float ANGLE_STEP = 1;
-bool perspectiva = true;
+bool perspectiva = false;
 bool seleccionado = false;
+bool ctrl_pulsado = false;
 
 // tipos
 typedef enum _tipo_objeto {
@@ -34,32 +35,38 @@ typedef enum _tipo_objeto {
   TABLERO,
   ESCENA
 } _tipo_objeto;
-_tipo_objeto t_objeto = OBJETO_PLY;
+_tipo_objeto t_objeto = ESCENA;
 _modo modo = SOLID;
+_modo modo1 = SOLID;
+_modo modo2 = SOLID;
+_modo modo3 = SOLID;
 
 unsigned int Material_active = 0;
 bool animar_luz = false;
-bool animar = false;
 bool luz_01 = true;
 bool luz_00 = true;
 bool interpolar_material = false;
+bool animar_camara = true;
 
 // variables que definen la posicion de la camara en coordenadas polares
 GLfloat Observer_distance;
 GLfloat Observer_angle_x;
 GLfloat Observer_angle_y;
+GLfloat movimiento_x;
 
-// variables que controlan la ventana y la transformacion de perspectiva
-GLfloat Size_x, Size_y, Front_plane, Back_plane;
 // variables que determninan la posicion y tamaño de la ventana X
-int UI_window_pos_x = 50, UI_window_pos_y = 50, UI_window_width = 800,
+int UI_window_pos_x = 1000, UI_window_pos_y = 0, UI_window_width = 800,
     UI_window_height = 800, yc, xc;
 
 // variables que determninan la posicion y tamaño de la ventana X
 int Window_x = 50, Window_y = 50, Window_width = 450, Window_high = 450;
 
 // objetos
-_piramide piramide(0.85, 1.3);
+_piramide piramide1(1.0, 1.3);
+_piramide piramide2(1.0, 1.3, piramide1.seleccionados.size());
+_piramide piramide3(1.0, 1.3,
+                    piramide1.seleccionados.size() +
+                        piramide2.seleccionados.size());
 _esfera esfera;
 _cubo cubo(1);
 _cilindro cilindro;
@@ -128,7 +135,7 @@ void EnableLight0() {
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadIdentity();
+    // glLoadIdentity();
     glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat *)&Position);
     glPopMatrix();
   } else
@@ -242,6 +249,18 @@ void animacion() {
     Material_shininess[3] =
         interpolacion(n, Material_shininess[1], Material_shininess[2]);
   }
+
+  if (animar_camara) {
+    // Observer_angle_x++;
+    Observer_angle_y++;
+    if (arriba)
+      glTranslatef(0, 100, 0);
+    else
+      glTranslatef(0, -100, 0);
+    EnableLight01();
+    arriba = !arriba;
+  }
+
   glutPostRedisplay();
 }
 
@@ -256,13 +275,9 @@ void change_projection() {
 
   // formato(x_minimo,x_maximo, y_minimo, y_maximo,Front_plane, plano_traser)
   //  Front_plane>0  Back_plane>PlanoDelantero)
-  if (perspectiva) {
-    glFrustum(X_MIN, X_MAX, Y_MIN, Y_MAX, FRONT_PLANE_PERSPECTIVE,
-              BACK_PLANE_PERSPECTIVE);
-  } else {
-    glOrtho(X_MIN - Observer_distance, X_MAX + Observer_distance,
-            Y_MIN - Observer_distance, Y_MAX + Observer_distance, -1000, 100);
-  }
+  glFrustum(X_MIN, X_MAX, Y_MIN, Y_MAX, FRONT_PLANE_PERSPECTIVE,
+            BACK_PLANE_PERSPECTIVE);
+  if (perspectiva) gluLookAt(4, 0, 4, -1, 0, 0, 0.1, -1, 0);
 }
 
 //**************************************************************************
@@ -273,7 +288,7 @@ void change_observer() {
   // posicion del observador
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0, 0, -Observer_distance);
+  glTranslatef(movimiento_x, 0, -Observer_distance);
   glRotatef(Observer_angle_x, 1, 0, 0);
   glRotatef(-Observer_angle_y, 0, 1, 0);
 }
@@ -309,14 +324,11 @@ void draw_objects() {
     case CUBO:
       cubo.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
       break;
-    case CILINDRO:
-      cilindro.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+    case PIRAMIDE:
+      piramide1.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
       break;
     case CONO:
       cono.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
-      break;
-    case PIRAMIDE:
-      piramide.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
       break;
     case OBJETO_PLY:
       ply1->draw(modo, 1.0, 0.6, 0.0, 0.0, 1.0, 0.3, 2);
@@ -325,10 +337,13 @@ void draw_objects() {
       esfera.draw(modo, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
       break;
     case ESCENA:
-      glPushMatrix();
-      glTranslatef(2, 3, 0);
-      esfera.draw(modo, 0.95, 0.95, 0.95, 0.0, 1.0, 0.0, 2);
-      glPopMatrix();
+      piramide1.draw(modo1, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+      glTranslatef(2, 0, 0);
+      piramide2.draw(modo2, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+      glTranslatef(2, 0, 0);
+      piramide3.draw(modo3, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2);
+      break;
+    case ARTICULADO:
       tanque.draw(modo, 1.0, 0.0, 0.0, 0.25, 1.0, 0.0, 2);
       break;
   }
@@ -340,10 +355,21 @@ void draw_objects() {
 
 void draw(void) {
   clear_window();
+  // vista 1
   change_projection();
+  // glViewport(UI_window_width/2, 0, UI_window_width/2, UI_window_height/2);
   change_observer();
   draw_axis();
   draw_objects();
+  EnableLight0();
+  // //vista 2
+  // change_projection();
+  // glViewport(0, 0, UI_window_width/2, UI_window_height);
+  // change_observer();
+  // glRotatef(90,1,0,0);
+  // draw_axis();
+  // draw_objects();
+  // EnableLight0();
   glutSwapBuffers();
 }
 
@@ -377,10 +403,10 @@ void normal_key(unsigned char Tecla1, int x, int y) {
     case 'Q':
       exit(0);
     case '1':
-      t_objeto = PIRAMIDE;
+      t_objeto = ARTICULADO;
       break;
     case '2':
-      t_objeto = CUBO;
+      t_objeto = ESCENA;
       break;
     case '3':
       t_objeto = CONO;
@@ -397,11 +423,11 @@ void normal_key(unsigned char Tecla1, int x, int y) {
     case '0':
       t_objeto = ESCENA;
     case 'C':
-      perspectiva = true;
+      perspectiva = false;
       change_projection();
       break;
     case 'V':
-      perspectiva = false;
+      perspectiva = true;
       change_projection();
       break;
   }
@@ -444,6 +470,9 @@ void special_key(int Tecla1, int x, int y) {
     case GLUT_KEY_F2:
       modo = SOLID_CHESS;
       break;
+    case GLUT_KEY_F3:
+      modo = ILLUMINATION_FLAT_SHADING;
+      break;
   }
   glutPostRedisplay();
 }
@@ -454,13 +483,9 @@ void special_key(int Tecla1, int x, int y) {
 
 void initialize(void) {
   // se inicalizan la ventana y los planos de corte
-  Size_x = 0.5;
-  Size_y = 0.5;
-  Front_plane = 1;
-  Back_plane = 1000;
 
   // se incia la posicion del observador, en el eje z
-  Observer_distance = 3 * Front_plane;
+  Observer_distance = 10 * FRONT_PLANE_PERSPECTIVE;
   Observer_angle_x = 0;
   Observer_angle_y = 0;
 
@@ -471,10 +496,8 @@ void initialize(void) {
   // se habilita el z-bufer
   glEnable(GL_DEPTH_TEST);
 
-  // punto_luz01.vertices.push_back(_vertex3f(2, 2, 2));
   set_materials();
 
-  change_projection();
   glViewport(UI_window_pos_x, UI_window_pos_y, Window_width, Window_high);
   glutSwapBuffers();
 }
@@ -505,6 +528,9 @@ void pick(GLint Selection_position_x, GLint Selection_position_y) {
   change_projection();
   change_observer();
   modo = SELECTION;
+  modo1 = SELECTION;
+  modo2 = SELECTION;
+  modo3 = SELECTION;
   draw_objects();  // Cambiar para que dibuje con los identificadores
   /*************************/
 
@@ -535,11 +561,11 @@ void pick(GLint Selection_position_x, GLint Selection_position_y) {
       case CILINDRO:
         cilindro.seleccionarCara(pickedID);
         break;
+      case PIRAMIDE:
+        piramide1.seleccionarCara(pickedID);
+        break;
       case CONO:
         cono.seleccionarCara(pickedID);
-        break;
-      case PIRAMIDE:
-        piramide.seleccionarCara(pickedID);
         break;
       case OBJETO_PLY:
         ply1->seleccionarCara(pickedID);
@@ -548,7 +574,24 @@ void pick(GLint Selection_position_x, GLint Selection_position_y) {
         esfera.seleccionarCara(pickedID);
         break;
       case ESCENA:
-        esfera.seleccionarCara(pickedID);
+        if (piramide1.seleccionarCara(pickedID)) {
+          cout << "PIRAMIDE 1 seleccionada" << endl;
+          modo1 = SOLID;
+          modo2 = EDGES;
+          modo3 = EDGES;
+        } else if (piramide2.seleccionarCara(pickedID)) {
+          cout << "PIRAMIDE 2 seleccionada" << endl;
+          modo2 = SOLID;
+          modo1 = EDGES;
+          modo3 = EDGES;
+        } else if (piramide3.seleccionarCara(pickedID)) {
+          cout << "PIRAMIDE 3 seleccionada" << endl;
+          modo3 = SOLID;
+          modo1 = EDGES;
+          modo2 = EDGES;
+        }
+        break;
+      case ARTICULADO:
         tanque.seleccionarCara(pickedID);
         break;
     }
@@ -578,12 +621,13 @@ void RatonMovido(int x, int y) {
     float x0, y0, xn, yn;
     getCamara(&x0, &y0);
     xn = x0 + (y - yc);
-    yn = y0 - (x - xc);
+    // yn = y0 - (x - xc);
     setCamara(xn, yn);
-    xc = x;
-    yc = y;
-    glutPostRedisplay();
   }
+  if (estadoRaton == 1) movimiento_x += (x - xc) * 0.1;
+  xc = x;
+  yc = y;
+  glutPostRedisplay();
 }
 
 void mousefunc(int button, int state, int x, int y) {
@@ -594,16 +638,21 @@ void mousefunc(int button, int state, int x, int y) {
       case GLUT_LEFT_BUTTON:
         xc = x;
         yc = y;
-        estadoRaton = 0;
+        if (glutGetModifiers() & GLUT_ACTIVE_CTRL)
+          estadoRaton = 0;
+        else if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+          estadoRaton = 1;
+        else
+          estadoRaton = 2;
         break;
       case GLUT_RIGHT_BUTTON:
         estadoRaton = 2;
         break;
       case 3:  // mouse wheel scrolls -- UP
-        Observer_distance *= 1.2;
+        Observer_distance /= 1.2;
         break;
       case 4:  //  -- DOWN
-        Observer_distance /= 1.2;
+        Observer_distance *= 1.2;
         break;
       default:
         break;
